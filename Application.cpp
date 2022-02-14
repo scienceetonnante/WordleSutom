@@ -96,8 +96,16 @@ class GameState
 {
     private:
         int K;
-        vector<string> played_words;
-        vector<int> obtained_patterns;
+        struct Step
+        {
+            Step(const string &word, int p) :
+                played_word(word),
+                pattern(p)
+            {}
+            string played_word;
+            int pattern;
+        };
+        vector<Step> steps;
         vector<int> green_mask;             // Redundant information for speed : the list of green letters (-1 if not known, 0 for A, 1 for B etc)
 
     public:
@@ -133,22 +141,21 @@ class GameState
         // Update the state by giving a word and its associated obtained pattern (we don't check size, warning)        
         void Update(const string &word, int pattern)
         {
-            played_words.push_back(word);
-            obtained_patterns.push_back(pattern);
+            steps.emplace_back(word, pattern);
 
             // Decode pattern to register green letters
             int current = pattern;
             for(int k=0;k<K;k++)
-            {     
+            {
                 int a = current%3;
                 if(a==2)    // if the letter was good and well placed
                 {
                     char c = word[k];
                     green_mask[k] = (c-ASCII_A);   // 0 for letter A
                 }
-                current = current/3;                          
+                current = current/3;
             }
-        } 
+        }
 
 
         // Whether a word is compatible with current state of the game
@@ -169,13 +176,13 @@ class GameState
 
             // Then check each of the previous steps of the game, to see whether that candidate truth word could have produced that series of patterns
             // We check in reverse assuming the later patterns carry more constraints (with option to check only that one if we know other are satisied)
-            for(int i = played_words.size() -1 ; i >=0 ; i--)
+            for(int i = steps.size() -1 ; i >=0 ; i--)
             {
-                string word = played_words[i];
-                int pattern = obtained_patterns[i];
+                const string &word = steps[i].played_word;
+                int pattern = steps[i].pattern;
                 if(ComputePattern(word,candidate_truth) != pattern) return false;   // not compatible == That candidate_truth would not have produced that observed pattern
 
-                if(i==played_words.size() -1 && check_only_last_step) return true;
+                if(i==steps.size() -1 && check_only_last_step) return true;
             }
             return true;
         }        
