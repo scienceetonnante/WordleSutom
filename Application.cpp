@@ -1,5 +1,6 @@
 #include <cmath>
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <fstream>
 #include <iostream>
@@ -11,6 +12,55 @@ using namespace std;
 
 static constexpr char ASCII_0 = 48;
 static constexpr char ASCII_A = 65;
+
+// constexpr function to compute powers of 3
+static constexpr int pow3(int k)
+{
+    int result = 1;
+
+    for (int i = 0 ; i < k ; ++i)
+    {
+        result *= 3;
+    }
+
+    return result;
+}
+
+// Fast version of pow() for powers of 3
+constexpr int pow(int x, int y)
+{
+    if (x != 3 || y > 12)
+    {
+        int result = 1;
+
+        for (int i = 0 ; i < y ; ++i)
+        {
+            result *= x;
+        }
+
+        return result;
+    }
+    else
+    {
+        constexpr array<int, 13> cache {
+            pow3(0),
+            pow3(1),
+            pow3(2),
+            pow3(3),
+            pow3(4),
+            pow3(5),
+            pow3(6),
+            pow3(7),
+            pow3(8),
+            pow3(9),
+            pow3(10),
+            pow3(11),
+            pow3(12),
+        };
+
+        return cache[y];
+    }
+}
 
 
 // Produces the pattern for a given tentative, assuming the truth
@@ -80,10 +130,10 @@ string PatternToStringOfSquares(int pattern, int K)
 
     int current = pattern;
     for(int k=0; k<K;k++)
-    {        
+    {
         int a = current%3;
-        res += a==2 ? "\U0001F7E9" : (a==1 ? "\U0001F7E8" : "\u2B1B");   
-        current = current/3;          
+        res += a==2 ? "\U0001F7E9" : (a==1 ? "\U0001F7E8" : "\u2B1B");
+        current = current/3;
     }
     return res;
 }
