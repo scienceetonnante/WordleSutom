@@ -311,8 +311,17 @@ void BasicRuleTest()
 vector<string> LoadWords(int K, int N)
 {
     // Read file dictionnary of words
-    vector<string> words;    
-    ifstream file("data/mots_"+to_string(K)+".txt");
+    vector<string> words;
+    const string filename = "data/mots_" + to_string(K) + ".txt";
+    ifstream file(filename);
+
+    if (!file.is_open())
+    {
+        cerr << "Failed to open file: " << filename << endl;
+        // A bit extreme, but if we are here the program won't work and will crash soon emough.
+        abort();
+    }
+
     string line;
     
     while(getline(file,line) && words.size() < N)
