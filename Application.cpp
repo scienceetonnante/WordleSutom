@@ -1,20 +1,72 @@
 #include <cmath>
 #include <algorithm>
-#include <iostream>
+#include <array>
+#include <chrono>
 #include <fstream>
+#include <iostream>
 #include <random>
+#include <string>
 #include <vector>
 
 using namespace std;
 
-#define ASCII_0 48
-#define ASCII_A 65
+static constexpr char ASCII_0 = 48;
+static constexpr char ASCII_A = 65;
+
+// constexpr function to compute powers of 3
+static constexpr int pow3(int k)
+{
+    int result = 1;
+
+    for (int i = 0 ; i < k ; ++i)
+    {
+        result *= 3;
+    }
+
+    return result;
+}
+
+// Fast version of pow() for powers of 3
+constexpr int pow(int x, int y)
+{
+    if (x != 3 || y > 12)
+    {
+        int result = 1;
+
+        for (int i = 0 ; i < y ; ++i)
+        {
+            result *= x;
+        }
+
+        return result;
+    }
+    else
+    {
+        constexpr array<int, 13> cache {
+            pow3(0),
+            pow3(1),
+            pow3(2),
+            pow3(3),
+            pow3(4),
+            pow3(5),
+            pow3(6),
+            pow3(7),
+            pow3(8),
+            pow3(9),
+            pow3(10),
+            pow3(11),
+            pow3(12),
+        };
+
+        return cache[y];
+    }
+}
 
 
 // Produces the pattern for a given tentative, assuming the truth
 // Pattern is coded as an integer equal to sum_k a_k 3^k  where a_k=0,1,2 are the color obtained (0:gray,1:yellow,2:green)
 // So this the number represents its "base 3" coding
-int ComputePattern(string tentative, string truth)
+int ComputePattern(const string &tentative, string truth)
 {
     vector<int> result(tentative.size(), 0);
 
@@ -58,13 +110,13 @@ int ComputePattern(string tentative, string truth)
 
 
 // Convert a string of 0,1,2 into the pattern code (warning, nothing checked)
-int StringToPattern(string s)
+int StringToPattern(const string &s)
 {
     int res = 0;
     for(int k=0;k<s.size();k++)
     {
         char c = s[k];              // Ascii code
-        int a = (int)c - ASCII_0;        // 0,1 or 2
+        int a = c - ASCII_0;        // 0,1 or 2
         res += a * pow(3,k);
     }
     return res;
@@ -74,14 +126,14 @@ int StringToPattern(string s)
 // The Unicode colored squares associated to a given pattern
 string PatternToStringOfSquares(int pattern, int K)
 {
-    string res = "";
+    string res;
 
     int current = pattern;
     for(int k=0; k<K;k++)
-    {        
+    {
         int a = current%3;
-        res += a==2 ? "\U0001F7E9" : (a==1 ? "\U0001F7E8" : "\u2B1B");   
-        current = current/3;          
+        res += a==2 ? "\U0001F7E9" : (a==1 ? "\U0001F7E8" : "\u2B1B");
+        current = current/3;
     }
     return res;
 }
@@ -94,20 +146,28 @@ class GameState
 {
     private:
         int K;
-        vector<string> played_words;
-        vector<int> obtained_patterns;
+        struct Step
+        {
+            Step(const string &word, int p) :
+                played_word(word),
+                pattern(p)
+            {}
+            string played_word;
+            int pattern;
+        };
+        vector<Step> steps;
         vector<int> green_mask;             // Redundant information for speed : the list of green letters (-1 if not known, 0 for A, 1 for B etc)
 
     public:
         // Base constructor
-        GameState(int K_)
+        explicit GameState(int K_)
         {
             K=K_;
             for(int k=0;k<K;k++) green_mask.push_back(-1);
         }      
 
         // Constructor with mask
-        GameState(int K_, string mask)
+        GameState(int K_, const string &mask)
         {
             K=K_;
             for(int k=0;k<K;k++) 
@@ -122,43 +182,36 @@ class GameState
         }
 
         // Copy constructor
-        GameState(const GameState &that)
-        {      
-            K = that.K;
-            played_words = that.played_words;      
-            obtained_patterns = that.obtained_patterns;
-            green_mask = that.green_mask;
-        }         
+        GameState(const GameState &that) = default;
 
 
         int GetWordSize() const {return K;}
 
 
         // Update the state by giving a word and its associated obtained pattern (we don't check size, warning)        
-        void Update(string word, int pattern)
+        void Update(const string &word, int pattern)
         {
-            played_words.push_back(word);
-            obtained_patterns.push_back(pattern);
+            steps.emplace_back(word, pattern);
 
             // Decode pattern to register green letters
             int current = pattern;
             for(int k=0;k<K;k++)
-            {     
+            {
                 int a = current%3;
                 if(a==2)    // if the letter was good and well placed
                 {
                     char c = word[k];
                     green_mask[k] = (c-ASCII_A);   // 0 for letter A
                 }
-                current = current/3;                          
+                current = current/3;
             }
-        } 
+        }
 
 
         // Whether a word is compatible with current state of the game
         // Compatible : it could be the solution ie, it could have produced that sequence.
 
-        bool isCompatible (string candidate_truth, bool check_only_last_step) const 
+        bool isCompatible (const string &candidate_truth, bool check_only_last_step) const
         {                    
             // First check the green mask to save time
             for(int k=0; k<K; k++)
@@ -173,13 +226,13 @@ class GameState
 
             // Then check each of the previous steps of the game, to see whether that candidate truth word could have produced that series of patterns
             // We check in reverse assuming the later patterns carry more constraints (with option to check only that one if we know other are satisied)
-            for(int i = played_words.size() -1 ; i >=0 ; i--)
+            for(int i = steps.size() -1 ; i >=0 ; i--)
             {
-                string word = played_words[i];
-                int pattern = obtained_patterns[i];
+                const string &word = steps[i].played_word;
+                int pattern = steps[i].pattern;
                 if(ComputePattern(word,candidate_truth) != pattern) return false;   // not compatible == That candidate_truth would not have produced that observed pattern
 
-                if(i==played_words.size() -1 && check_only_last_step) return true;
+                if(i==steps.size() -1 && check_only_last_step) return true;
             }
             return true;
         }        
@@ -270,7 +323,7 @@ string ComputeBestChoice(GameState initial_state, const vector<string> &words)
     }
 
     // Now find the word with the maximum entropy    
-    string best_choice = "";
+    string best_choice;
     float best_entropy = -1;
     for(int iw = 0; iw < candidate_pool.size(); iw++)
     {   
@@ -297,7 +350,7 @@ string ComputeBestChoice(GameState initial_state, const vector<string> &words)
 // Simple tests
 // ============
 
-void PrintTest(string truth, string word)
+void PrintTest(const string &truth, const string &word)
 {
     cout << "(" << truth << ")" << " " << word << " " << PatternToStringOfSquares(ComputePattern(word,truth),word.size()) << endl;
 }
@@ -356,7 +409,7 @@ vector<string> LoadWords(int K, int N)
 
 // Load words matching a certain mask. 
 // E.g if mask = "F......" : length=7 and starts with F.
-vector<string> LoadWordsWithMask(int N, string mask)
+vector<string> LoadWordsWithMask(int N, const string &mask)
 {
     int K = mask.size();
     vector<string> words = LoadWords(K,N);
@@ -394,9 +447,9 @@ vector<string> LoadWordsWithMask(int N, string mask)
 
 // Automatically plays a game with a given solution "ground_truth" and a given initial_mask
 
-int AutomaticPlay(const vector<string> & words, string ground_truth, string initial_mask)
+int AutomaticPlay(const vector<string> & words, const string &ground_truth, const string &initial_mask)
 {    
-    cout << endl << "*** NEW GAME Truth=" << ground_truth << endl;
+    cout << "\n*** NEW GAME Truth=" << ground_truth << endl;
     
     int K = words[0].size();
     GameState state(K,initial_mask);
@@ -406,7 +459,7 @@ int AutomaticPlay(const vector<string> & words, string ground_truth, string init
     const int MAX_STEPS = 6;
     for(int s = 0; s < MAX_STEPS; s++)
     {        
-        string proposal = "";
+        string proposal;
 
         // If first steps Use known best words for opening
         if(s==0)
@@ -415,8 +468,8 @@ int AutomaticPlay(const vector<string> & words, string ground_truth, string init
             if(initial_mask == "......") proposal = "SORTIE";
         }
 
-        if(proposal== "") proposal = ComputeBestChoice(state, words);        
-        cout << endl << proposal;
+        if(proposal.empty()) proposal = ComputeBestChoice(state, words);
+        cout << '\n' << proposal;
 
         int pattern = ComputePattern(proposal, ground_truth);
         cout << " " << PatternToStringOfSquares(pattern,state.GetWordSize()) << " ";
@@ -438,14 +491,14 @@ int AutomaticPlay(const vector<string> & words, string ground_truth, string init
 }
 
 
-int AutoWordle(string ground_truth)
+int AutoWordle(const string &ground_truth)
 {    
     int K = ground_truth.size();
     
     vector<string> words = LoadWords(K,4096);
 
-    string initial_mask = "";
-    for(int k=0;k<K;k++) initial_mask += ".";
+    string initial_mask;
+    for(int k=0;k<K;k++) initial_mask += '.';
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
 
@@ -453,12 +506,12 @@ int AutoWordle(string ground_truth)
 }
 
 // Automatically plays a "SUTOM" like game, with first letter given
-int AutoSutom(string ground_truth)
+int AutoSutom(const string &ground_truth)
 {    
     int K = ground_truth.size();
-    string initial_mask = "";
+    string initial_mask;
     initial_mask += ground_truth[0];        // First letter
-    for(int k=1;k<K;k++) initial_mask += ".";
+    for(int k=1;k<K;k++) initial_mask += '.';
     vector<string> words = LoadWordsWithMask(100000,initial_mask);
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
@@ -483,8 +536,8 @@ void ComputeAveragePerformance(int K, int NB_TESTS)
 {
     int MAX_NUMBER_OF_WORDS = 4096;
     vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
-    string initial_mask = "";
-    for(int k=0;k<K;k++) initial_mask +=".";
+    string initial_mask;
+    for(int k=0;k<K;k++) initial_mask +='.';
 
     std::random_device rd;                          // obtain a random number from hardware
     std::mt19937 gen(rd());                         // seed the generator
@@ -498,7 +551,7 @@ void ComputeAveragePerformance(int K, int NB_TESTS)
         int s = AutomaticPlay(words, truth, initial_mask);            // get performance
         avg = ((avg * (float) i + s))/((float) i+1);        // update average
         i++;
-        cout << "*** CURRENT AVERAGE = " << avg << " (" << i << " tests)" << endl << endl;
+        cout << "*** CURRENT AVERAGE = " << avg << " (" << i << " tests)\n" << endl;
     }
 }
 
@@ -519,9 +572,9 @@ void ComputeAverageSutomPerformance(int K, int NB_TESTS)
         
         string truth = words[n];  // choose a word
 
-        string initial_mask = "";
+        string initial_mask;
         initial_mask += truth[0];
-        for(int k=1;k<K;k++) initial_mask +=".";
+        for(int k=1;k<K;k++) initial_mask += '.';
         
         int s = AutoSutom(truth);            // get performance
 
@@ -548,7 +601,7 @@ void RealInteractiveGame()
 
     for(int s = 0; s < 6; s++)
     {      
-        string proposal = "";
+        string proposal;
         
         // If first steps Use known best words for opening
         if(s==0)
@@ -557,9 +610,9 @@ void RealInteractiveGame()
             if(initial_mask == "......") proposal = "SORTIE";
         }
         
-        if(proposal == "") proposal = ComputeBestChoice(state, words);
+        if(proposal.empty()) proposal = ComputeBestChoice(state, words);
         
-        cout << "Suggestion : " << proposal << endl;
+        cout << "Suggestion : " << proposal << '\n';
         cout << "Choix :";
         string choice;
         cin >> choice;
@@ -579,7 +632,15 @@ int main()
 
     BasicRuleTest();
 
+    auto clock = chrono::steady_clock();
+    const auto start = clock.now();
+
     AutoWordle("REPAS");
+    AutoWordle("SAPIN");
+
+    const auto end = clock.now();
+    chrono::nanoseconds dt = end - start;
+    cout << "Time spent: " << double(dt.count()) / 1'000'000 << "ms" << endl;
 
     AutoSutom("DIAMETRE");
 
