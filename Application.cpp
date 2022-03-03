@@ -10,8 +10,9 @@
 
 using namespace std;
 
-static constexpr char ASCII_0 = 48;
-static constexpr char ASCII_A = 65;
+static constexpr char ASCII_0 = '0';
+static constexpr char ASCII_A = 'A';
+static constexpr char ASCII_Z = 'Z';
 
 // constexpr function to compute powers of 3
 static constexpr int pow3(int k)
@@ -173,11 +174,10 @@ class GameState
             for(int k=0;k<K;k++) 
             {
                 char c_mask = mask[k];
-                if(c_mask >= ASCII_A && c_mask < ASCII_A + 26)  // if the mask specifies a letter
+                if(c_mask >= ASCII_A && c_mask <= ASCII_Z)  // if the mask specifies a letter
                 {
-                    green_mask.push_back(c_mask-ASCII_A);
+                    green_mask[k] = c_mask - ASCII_A;
                 }
-                else green_mask.push_back(-1);
             }
         }
 
@@ -422,7 +422,7 @@ vector<string> LoadWordsWithMask(int N, const string &mask)
         for(int k=0;k<K;k++)
         {
             char c_mask = mask[k];
-            if(c_mask >= ASCII_A && c_mask < ASCII_A + 26)  // if the mask specifies a letter, check the word satisfies it
+            if(c_mask >= ASCII_A && c_mask <= ASCII_Z)  // if the mask specifies a letter, check the word satisfies it
             {
                 char c_word = word[k];
                 if(c_word != c_mask)
