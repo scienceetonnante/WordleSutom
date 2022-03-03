@@ -152,8 +152,8 @@ class GameState
         size_t K;
         struct Step
         {
-            Step(const string &word, int p) :
-                played_word(word),
+            Step(string word, int p) :
+                played_word(std::move(word)),
                 pattern(p)
             {}
             string played_word;
