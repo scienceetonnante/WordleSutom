@@ -490,6 +490,8 @@ int AutomaticPlay(const vector<string> & words, const string &ground_truth, cons
 int AutoWordle(const string &ground_truth)
 {    
     size_t K = ground_truth.size();
+    vector<string> words = LoadWords(K,MAX_NUMBER_OF_WORDS);
+    string initial_mask = string(K, '.');
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
 
@@ -500,6 +502,7 @@ int AutoWordle(const string &ground_truth)
 int AutoSutom(const string &ground_truth)
 {    
     size_t K = ground_truth.size();
+    string initial_mask = ground_truth[0] + string(K - 1, '.'); // First letter
     vector<string> words = LoadWordsWithMask(100000,initial_mask);
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
@@ -522,8 +525,7 @@ void FindBestOpening(int K)
 void ComputeAveragePerformance(int K, int NB_TESTS)
 {
     vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
-    string initial_mask;
-    for(int k=0;k<K;k++) initial_mask +='.';
+    string initial_mask = string(K, '.');
 
     std::random_device rd;                          // obtain a random number from hardware
     std::mt19937 gen(rd());                         // seed the generator
