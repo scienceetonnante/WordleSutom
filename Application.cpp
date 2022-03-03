@@ -238,12 +238,11 @@ class GameState
         }        
        
 
-        int NbOfCompatibleWords(const vector<string> &words)
+        int NbOfCompatibleWords(const vector<string> &words) const
         {            
             int cnt = 0;
-            for(int iw = 0; iw < words.size(); iw++)
+            for(const auto& word : words)
             {        
-                string word = words[iw]; 
                 if(isCompatible(word,false))
                 {
                     cnt++;
@@ -271,9 +270,8 @@ double ComputeEntropy(const GameState &initial_state, const string &word, const 
 
         // In that case, count how many would be compatible as being the ground truth
         int cnt = 0;            
-        for(int jw = 0; jw < possible_solutions.size();jw++)
+        for(const auto& candidate_word : possible_solutions)
         {
-            string candidate_word = possible_solutions[jw];
             cnt += state.isCompatible(candidate_word,true);     // we are checking previously possible solutions, so we look only at last step
         }
         double p = static_cast<double>(cnt) / static_cast<double>(possible_solutions.size());
@@ -287,38 +285,37 @@ double ComputeEntropy(const GameState &initial_state, const string &word, const 
 }
 
 
-string ComputeBestChoice(GameState initial_state, const vector<string> &words)
-{    
+string ComputeBestChoice(const GameState& initial_state, const vector<string> &words)
+{
     vector<string> candidate_pool = words;
 
     // Build the list of remaining possible solutions at this stage
     vector<string> possible_solutions;
-    for(int iw = 0; iw < words.size(); iw++)
-    {        
-        string word = words[iw]; 
+    for(const auto& word : words)
+    {
         if(initial_state.isCompatible(word,false))
         {
             possible_solutions.push_back(word);
         }
     }
-    
+
     // If only one, we are done
     if(possible_solutions.size() == 1) return possible_solutions[0];
 
     // If less than 10 : display
     cout << "Number of possible solutions " << possible_solutions.size() << " :";
     if(possible_solutions.size() < 10)
-    {        
-        for(int iw=0;iw<possible_solutions.size();iw++)
+    {
+        for(auto & possible_solution : possible_solutions)
         {
-            cout << possible_solutions[iw] << ",";
+            cout << possible_solution << ",";
         }
     }
     cout << endl;
 
     // If less than 3, we limit our choice to the possible solutions, so we try to "shoot to kill"
     if(possible_solutions.size() < 4)
-    {        
+    {
         candidate_pool = possible_solutions;
     }
 
@@ -415,9 +412,8 @@ vector<string> LoadWordsWithMask(size_t N, const string &mask)
     vector<string> words = LoadWords(K,N);
     vector<string> res;
     int cnt = 0;
-    for(int iw = 0; iw < words.size(); iw++)
+    for(auto& word : words)
     {
-        string word = words[iw];
         bool word_ok = true;
         for(size_t k=0; k < K; k++)
         {
