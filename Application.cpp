@@ -574,7 +574,7 @@ void RealInteractiveGame()
 
     size_t K = initial_mask.size();
 
-    vector<string> words = LoadWordsWithMask(100000,initial_mask);
+    vector<string> words = LoadWordsWithMask(numeric_limits<size_t>::max(),initial_mask);
 
     GameState state(K,initial_mask);
 
