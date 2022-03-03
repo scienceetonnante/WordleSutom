@@ -8,6 +8,9 @@
 #include <string>
 #include <vector>
 
+static constexpr int MAX_NUMBER_OF_WORDS = 4096;
+
+
 using namespace std;
 
 static constexpr char ASCII_0 = '0';
@@ -512,7 +515,6 @@ int AutoSutom(const string &ground_truth)
 
 void FindBestOpening(int K)
 {
-    int MAX_NUMBER_OF_WORDS = 4096;
     vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
     GameState initial_state(K);
     ComputeBestChoice(initial_state,words);
@@ -522,7 +524,6 @@ void FindBestOpening(int K)
 // A series of random tests to compute average performance
 void ComputeAveragePerformance(int K, int NB_TESTS)
 {
-    int MAX_NUMBER_OF_WORDS = 4096;
     vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
     string initial_mask;
     for(int k=0;k<K;k++) initial_mask +='.';
