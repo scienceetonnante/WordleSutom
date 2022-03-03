@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 #include <execution>
+#include <mutex>
+#include <atomic>
 
 static constexpr int MAX_NUMBER_OF_WORDS = 4096;
 
@@ -323,12 +325,14 @@ string ComputeBestChoice(const GameState& initial_state, const vector<string> &w
 
     // Now find the word with the maximum entropy    
     string best_choice;
-    double best_entropy = -1;
+    atomic<double> best_entropy = -1.;
+    mutex m;
     for_each(execution::par, candidate_pool.begin(), candidate_pool.end(),
     [&](auto& word){
         double entropy = ComputeEntropy(initial_state, word, possible_solutions);
         if(entropy > best_entropy)
         {
+            lock_guard<mutex> guard(m);
             best_entropy = entropy;
             best_choice = word;
             cout << "New best option : " << best_choice << " : " << best_entropy << " bits" << endl;
