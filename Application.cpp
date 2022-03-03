@@ -396,6 +396,8 @@ vector<string> LoadWords(size_t K, size_t N)
     
     while(getline(file,line) && words.size() < N)
     {
+        if (line.size() != K)
+            continue;
         // Convert to CAPS : after we assume there is nothing elese than A-Z
         for_each(line.begin(), line.end(), [](char & c)
         {
@@ -451,7 +453,9 @@ vector<string> LoadWordsWithMask(size_t N, const string &mask)
 // Automatically plays a game with a given solution "ground_truth" and a given initial_mask
 
 int AutomaticPlay(const vector<string> & words, const string &ground_truth, const string &initial_mask)
-{    
+{
+    if (initial_mask.size() != ground_truth.size())
+        throw std::runtime_error("Initial_mask and Ground_truth don't have the same length.");
     cout << "\n*** NEW GAME Truth=" << ground_truth << endl;
     
     size_t K = words[0].size();
