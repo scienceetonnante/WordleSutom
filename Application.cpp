@@ -531,15 +531,14 @@ void ComputeAveragePerformance(int K, int NB_TESTS)
     std::mt19937 gen(rd());                         // seed the generator
     std::uniform_int_distribution<> distr(0, 1000); // define the range
 
-    float avg = 0;
+    double avg = 0;
     for(int i = 0; i < NB_TESTS; i++)
     {  
         int n = distr(gen);
         string truth = words[n];                        // choose a word
         int s = AutomaticPlay(words, truth, initial_mask);            // get performance
-        avg = ((avg * (float) i + s))/((float) i+1);        // update average
-        i++;
-        cout << "*** CURRENT AVERAGE = " << avg << " (" << i << " tests)\n" << endl;
+        avg = ((avg * static_cast<double>(i) + s))/(static_cast<double>(i+1));        // update average
+        cout << "*** CURRENT AVERAGE = " << avg << " (" << i + 1 << " tests)\n" << endl;
     }
 }
 
@@ -551,9 +550,7 @@ void ComputeAverageSutomPerformance(int K, int NB_TESTS)
     vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
     std::uniform_int_distribution<> distr(0, 1000); // define the range
 
-    int MAX_NUMBER_OF_WORDS = 4096;
-    
-    float avg = 0;
+    double avg = 0;
     for(int i = 0; i < NB_TESTS; i++)
     {  
         int n = distr(gen);
@@ -561,9 +558,8 @@ void ComputeAverageSutomPerformance(int K, int NB_TESTS)
         string truth = words[n];  // choose a word
         int s = AutoSutom(truth);            // get performance
 
-        avg = ((avg * (float) i + s))/((float) i+1);        // update average
-        i++;
-        cout << "*** CURRENT AVERAGE = " << avg << " (" << i << " tests)" << endl << endl;
+        avg = ((avg * static_cast<double>(i) + s))/(static_cast<double>(i+1));        // update average
+        cout << "*** CURRENT AVERAGE = " << avg << " (" << i + 1 << " tests)" << endl << '\n';
     }
 }
 
