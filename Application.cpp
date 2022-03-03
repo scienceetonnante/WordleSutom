@@ -592,12 +592,20 @@ void RealInteractiveGame()
         if(proposal.empty()) proposal = ComputeBestChoice(state, words);
         
         cout << "Suggestion : " << proposal << '\n';
-        cout << "Choix :";
         string choice;
-        cin >> choice;
-        cout << "Resultat obtenu :";            // expect a string like 21002 for green/yellow/gray/gray/green
+        do
+        {
+            cout << "Choix :";
+            cin >> choice;
+        }
+        while(choice.size() != K);
         string result;
-        cin >> result;               
+        do
+        {
+            cout << "Resultat obtenu :";            // expect a string like 21002 for green/yellow/gray/gray/green
+            cin >> result;
+        }
+        while(result.size() != K);
         state.Update(choice, StringToPattern(result));        
     }
 }
