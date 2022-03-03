@@ -627,7 +627,7 @@ int main()
 
     const auto end = clock.now();
     chrono::nanoseconds dt = end - start;
-    cout << "Time spent: " << double(dt.count()) / 1'000'000 << "ms" << endl;
+    cout << "Time spent: " << chrono::duration_cast<chrono::milliseconds>(dt).count() << "ms" << endl;
 
     AutoSutom("DIAMETRE");
 
