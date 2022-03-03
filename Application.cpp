@@ -71,7 +71,7 @@ int ComputePattern(const string &tentative, string truth)
 {
     vector<int> result(tentative.size(), 0);
 
-    for(int k = 0; k < tentative.size(); k++)
+    for(size_t  k = 0; k < tentative.size(); k++)
     {
         if(tentative[k]==truth[k])
         {
@@ -80,12 +80,12 @@ int ComputePattern(const string &tentative, string truth)
         }
     }
 
-    for(int k = 0; k < tentative.size(); k++)
+    for(size_t k = 0; k < tentative.size(); k++)
     {
         if (result[k] != 0) continue;
 
         bool fnd = false;
-        for(int k2 = 0; k2 < tentative.size(); k2++)
+        for(size_t k2 = 0; k2 < tentative.size(); k2++)
         {
             // If found elsewhere and that elsewhere is not already green
             if(tentative[k] == truth[k2])
@@ -101,7 +101,7 @@ int ComputePattern(const string &tentative, string truth)
 
     int res = 0;
 
-    for(int k = 0; k < tentative.size(); k++)
+    for(size_t k = 0; k < tentative.size(); k++)
     {
         res += result[k] * pow(3,k);
     }
@@ -114,7 +114,7 @@ int ComputePattern(const string &tentative, string truth)
 int StringToPattern(const string &s)
 {
     int res = 0;
-    for(int k=0;k<s.size();k++)
+    for(size_t k=0; k < s.size();k++)
     {
         char c = s[k];              // Ascii code
         int a = c - ASCII_0;        // 0,1 or 2
@@ -125,12 +125,12 @@ int StringToPattern(const string &s)
 
 
 // The Unicode colored squares associated to a given pattern
-string PatternToStringOfSquares(int pattern, int K)
+string PatternToStringOfSquares(int pattern, size_t K)
 {
     string res;
 
     int current = pattern;
-    for(int k=0; k<K;k++)
+    for(size_t k=0; k < K;k++)
     {
         int a = current%3;
         res += a==2 ? "\U0001F7E9" : (a==1 ? "\U0001F7E8" : "\u2B1B");
@@ -146,7 +146,7 @@ string PatternToStringOfSquares(int pattern, int K)
 class GameState
 {
     private:
-        int K;
+        size_t K;
         struct Step
         {
             Step(const string &word, int p) :
@@ -161,17 +161,14 @@ class GameState
 
     public:
         // Base constructor
-        explicit GameState(int K_)
+        explicit GameState(size_t K_) : K(K_), green_mask(K, -1)
         {
-            K=K_;
-            for(int k=0;k<K;k++) green_mask.push_back(-1);
-        }      
+        }
 
         // Constructor with mask
-        GameState(int K_, const string &mask)
+        GameState(size_t K_, const string &mask) : K(K_), green_mask(K, -1)
         {
-            K=K_;
-            for(int k=0;k<K;k++) 
+            for(size_t k=0; k < K; k++)
             {
                 char c_mask = mask[k];
                 if(c_mask >= ASCII_A && c_mask <= ASCII_Z)  // if the mask specifies a letter
@@ -185,7 +182,7 @@ class GameState
         GameState(const GameState &that) = default;
 
 
-        int GetWordSize() const {return K;}
+        size_t GetWordSize() const {return K;}
 
 
         // Update the state by giving a word and its associated obtained pattern (we don't check size, warning)        
@@ -195,7 +192,7 @@ class GameState
 
             // Decode pattern to register green letters
             int current = pattern;
-            for(int k=0;k<K;k++)
+            for(size_t k=0; k < K; k++)
             {
                 int a = current%3;
                 if(a==2)    // if the letter was good and well placed
@@ -212,9 +209,9 @@ class GameState
         // Compatible : it could be the solution ie, it could have produced that sequence.
 
         bool isCompatible (const string &candidate_truth, bool check_only_last_step) const
-        {                    
+        {
             // First check the green mask to save time
-            for(int k=0; k<K; k++)
+            for(size_t k=0; k < K; k++)
             {
                 if(green_mask[k] != -1)
                 {
@@ -259,8 +256,7 @@ class GameState
 
 float ComputeEntropy(const GameState &initial_state, const string &word, const vector<string> &possible_solutions)
 {    
-    float entropy = 0;
-    int K = initial_state.GetWordSize();
+    size_t K = initial_state.GetWordSize();
 
     // For each pattern we could get, compute expected entropy
     for(int pattern = 0; pattern < pow(3,K); pattern++)
@@ -374,7 +370,7 @@ void BasicRuleTest()
 // ==================================================================================================================
 
 // Load words with a given length. File are assumed to be like "data/mots_5.txt"
-vector<string> LoadWords(int K, int N)
+vector<string> LoadWords(size_t K, size_t N)
 {
     // Read file dictionnary of words
     vector<string> words;
@@ -409,9 +405,9 @@ vector<string> LoadWords(int K, int N)
 
 // Load words matching a certain mask. 
 // E.g if mask = "F......" : length=7 and starts with F.
-vector<string> LoadWordsWithMask(int N, const string &mask)
+vector<string> LoadWordsWithMask(size_t N, const string &mask)
 {
-    int K = mask.size();
+    size_t K = mask.size();
     vector<string> words = LoadWords(K,N);
     vector<string> res;
     int cnt = 0;
@@ -419,7 +415,7 @@ vector<string> LoadWordsWithMask(int N, const string &mask)
     {
         string word = words[iw];
         bool word_ok = true;
-        for(int k=0;k<K;k++)
+        for(size_t k=0; k < K; k++)
         {
             char c_mask = mask[k];
             if(c_mask >= ASCII_A && c_mask <= ASCII_Z)  // if the mask specifies a letter, check the word satisfies it
@@ -451,10 +447,10 @@ int AutomaticPlay(const vector<string> & words, const string &ground_truth, cons
 {    
     cout << "\n*** NEW GAME Truth=" << ground_truth << endl;
     
-    int K = words[0].size();
+    size_t K = words[0].size();
     GameState state(K,initial_mask);
     int nb_compat = state.NbOfCompatibleWords(words);
-    cout << "Nb of compatible words : " << nb_compat << " Entropy=" << log(nb_compat)/log(2);
+    cout << "Nb of compatible words : " << nb_compat << " Entropy=" << log(nb_compat)/log(2) << '\n';
 
     const int MAX_STEPS = 6;
     for(int s = 0; s < MAX_STEPS; s++)
@@ -493,12 +489,7 @@ int AutomaticPlay(const vector<string> & words, const string &ground_truth, cons
 
 int AutoWordle(const string &ground_truth)
 {    
-    int K = ground_truth.size();
-    
-    vector<string> words = LoadWords(K,4096);
-
-    string initial_mask;
-    for(int k=0;k<K;k++) initial_mask += '.';
+    size_t K = ground_truth.size();
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
 
@@ -508,10 +499,7 @@ int AutoWordle(const string &ground_truth)
 // Automatically plays a "SUTOM" like game, with first letter given
 int AutoSutom(const string &ground_truth)
 {    
-    int K = ground_truth.size();
-    string initial_mask;
-    initial_mask += ground_truth[0];        // First letter
-    for(int k=1;k<K;k++) initial_mask += '.';
+    size_t K = ground_truth.size();
     vector<string> words = LoadWordsWithMask(100000,initial_mask);
 
     int score = AutomaticPlay(words, ground_truth, initial_mask);
@@ -593,7 +581,7 @@ void RealInteractiveGame()
     cout << "Enter initial mask:";
     cin >> initial_mask;
 
-    int K = initial_mask.size();
+    size_t K = initial_mask.size();
 
     vector<string> words = LoadWordsWithMask(100000,initial_mask);
 
