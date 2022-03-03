@@ -257,8 +257,9 @@ class GameState
 
 // ==================================================================================================================
 
-float ComputeEntropy(const GameState &initial_state, const string &word, const vector<string> &possible_solutions)
-{    
+double ComputeEntropy(const GameState &initial_state, const string &word, const vector<string> &possible_solutions)
+{
+    double entropy = 0;
     size_t K = initial_state.GetWordSize();
 
     // For each pattern we could get, compute expected entropy
@@ -275,7 +276,7 @@ float ComputeEntropy(const GameState &initial_state, const string &word, const v
             string candidate_word = possible_solutions[jw];
             cnt += state.isCompatible(candidate_word,true);     // we are checking previously possible solutions, so we look only at last step
         }
-        float p = (float) cnt / (float) possible_solutions.size();
+        double p = static_cast<double>(cnt) / static_cast<double>(possible_solutions.size());
         if(p>0) 
         {
             entropy += - p * log(p) / log(2);
@@ -479,9 +480,9 @@ int AutomaticPlay(const vector<string> & words, const string &ground_truth, cons
             return s+1;            
         }
         
-        float old_entropy = log(state.NbOfCompatibleWords(words))/log(2);
+        double old_entropy = log(state.NbOfCompatibleWords(words))/log(2);
         state.Update(proposal, pattern);
-        float new_entropy = log(state.NbOfCompatibleWords(words))/log(2);
+        double new_entropy = log(state.NbOfCompatibleWords(words))/log(2);
 
         cout << "Entropy gain = " << (old_entropy-new_entropy);
         cout << " Nb of compatible words : " << state.NbOfCompatibleWords(words) << " New entropy=" << log(state.NbOfCompatibleWords(words))/log(2) << " ";            
