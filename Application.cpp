@@ -10,6 +10,7 @@
 
 static constexpr int MAX_NUMBER_OF_WORDS = 4096;
 
+static constexpr bool ENGLISH = false;
 
 using namespace std;
 
@@ -375,7 +376,13 @@ vector<string> LoadWords(size_t K, size_t N)
 {
     // Read file dictionnary of words
     vector<string> words;
-    const string filename = "data/mots_" + to_string(K) + ".txt";
+    string filename;
+    if constexpr(ENGLISH) {
+        filename = "data_en/words_" + to_string(K) + ".txt";
+    }
+    else {
+        filename = "data/mots_" + to_string(K) + ".txt";
+    }
     ifstream file(filename);
 
     if (!file.is_open())
@@ -458,7 +465,7 @@ int AutomaticPlay(const vector<string> & words, const string &ground_truth, cons
         string proposal;
 
         // If first steps Use known best words for opening
-        if(s==0)
+        if(s==0 && !ENGLISH)
         {
             if(initial_mask == ".....") proposal = "TARIE";
             if(initial_mask == "......") proposal = "SORTIE";
@@ -583,7 +590,7 @@ void RealInteractiveGame()
         string proposal;
         
         // If first steps Use known best words for opening
-        if(s==0)
+        if(s==0 && !ENGLISH)
         {
             if(initial_mask == ".....") proposal = "TARIE";
             if(initial_mask == "......") proposal = "SORTIE";
