@@ -548,6 +548,7 @@ void ComputeAverageSutomPerformance(int K, int NB_TESTS)
 {
     std::random_device rd;                          // obtain a random number from hardware
     std::mt19937 gen(rd());                         // seed the generator
+    vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
     std::uniform_int_distribution<> distr(0, 1000); // define the range
 
     int MAX_NUMBER_OF_WORDS = 4096;
@@ -555,15 +556,9 @@ void ComputeAverageSutomPerformance(int K, int NB_TESTS)
     float avg = 0;
     for(int i = 0; i < NB_TESTS; i++)
     {  
-        vector<string> words = LoadWords(K, MAX_NUMBER_OF_WORDS);
         int n = distr(gen);
         
         string truth = words[n];  // choose a word
-
-        string initial_mask;
-        initial_mask += truth[0];
-        for(int k=1;k<K;k++) initial_mask += '.';
-        
         int s = AutoSutom(truth);            // get performance
 
         avg = ((avg * (float) i + s))/((float) i+1);        // update average
