@@ -262,30 +262,27 @@ class GameState
 
 double ComputeEntropy(const GameState &initial_state, const string &word, const vector<string> &possible_solutions)
 {
-    double entropy = 0;
+    static thread_local std::vector<int> pattern_counts;
+    // Assign each candidate to a pattern
     size_t K = initial_state.GetWordSize();
-
-    // For each pattern we could get, compute expected entropy
-    for(int pattern = 0; pattern < pow(3,K); pattern++)
+    pattern_counts.resize(pow(3, K));
+    std::fill(std::begin(pattern_counts), std::end(pattern_counts), 0);
+    for(const auto& candidate_word : possible_solutions)
     {
-        // If we got that pattern from that word, in which state would we be
-        GameState state(initial_state);
-        state.Update(word,pattern);
-
-        // In that case, count how many would be compatible as being the ground truth
-        int cnt = 0;            
-        for(const auto& candidate_word : possible_solutions)
+        int pattern = ComputePattern(word, candidate_word);
+        ++pattern_counts[pattern];
+    }
+    // Compute entropy
+    double entropy = 0;
+    for (const auto& count : pattern_counts)
+    {
+        if (count > 0)
         {
-            cnt += state.isCompatible(candidate_word,true);     // we are checking previously possible solutions, so we look only at last step
-        }
-        double p = static_cast<double>(cnt) / static_cast<double>(possible_solutions.size());
-        if(p>0) 
-        {
+            double p = static_cast<double>(count) / static_cast<double>(possible_solutions.size());
             entropy += - p * log(p) / log(2);
         }
     }
-
-    return entropy;        
+    return entropy;
 }
 
 
