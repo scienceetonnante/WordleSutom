@@ -1,11 +1,12 @@
-# WordleSutom
+# Wordle and Sutom
+
 Solve WORDLE / SUTOM game using maximum expected information.
 
-French explanations :
+I created this code for my science outreach video (in French)
 
-Video : https://youtu.be/iw4_7ioHWF4
+[![Screenshot](https://github.com/user-attachments/assets/4029f88c-7804-42f8-9e40-e02a392e03af)](https://youtu.be/iw4_7ioHWF4)
 
-Blog : https://scienceetonnante.com/2022/02/13/comment-craquer-le-jeu-wordle-sutom/
+Blogpost : https://scienceetonnante.com/2022/02/13/comment-craquer-le-jeu-wordle-sutom/
 
 See in main() to choose what you want to do.
 
